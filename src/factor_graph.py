@@ -70,7 +70,7 @@ class factor_graph:
 		for counter, v_name in enumerate(factor_.get_variables()):
 			if (self.get_node_status(v_name) == 'variable') and (not factor_.is_none()):
 				if (self._graph.vs.find(name=v_name)['rank'] != factor_.get_shape()[counter])  \
-					and (self._graph.vs.find(name==v_name)['rank'] != None) \
+					and (self._graph.vs.find(name=v_name)['rank'] != None) \
 					and (self._graph.vs.find(v_name).degree() > allowed_v_degree):
 					raise Exception('Invalid shape of factor_')
 
