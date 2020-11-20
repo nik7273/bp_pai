@@ -5,6 +5,7 @@ class factor:
         if (distribution is None) and (variables is not None):
             self.__set_data(np.array(variables), None, None)
         elif (variables is None) or (len(variables) != len(distribution.shape)):
+            print('variable length: %d but distribution shape is: %d',len(variables), len(distribution.shape))
             raise Exception('Data is incorrect')
         else:
             self.__set_data(np.array(variables),

@@ -72,6 +72,7 @@ class factor_graph:
 				if (self._graph.vs.find(name=v_name)['rank'] != factor_.get_shape()[counter])  \
 					and (self._graph.vs.find(name=v_name)['rank'] != None) \
 					and (self._graph.vs.find(v_name).degree() > allowed_v_degree):
+					print('shape should be: ',self._graph.vs.find(name=v_name)['rank'] )
 					raise Exception('Invalid shape of factor_')
 
 
