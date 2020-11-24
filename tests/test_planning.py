@@ -2,12 +2,13 @@ import sys
 import os
 script_path = os.path.dirname(os.path.realpath(__file__))
 os.sys.path.append(os.path.realpath(script_path + '/../src/'))
+os.sys.path.append(os.path.realpath(script_path + '/../simulation/'))
 from factor import *
 from factor_graph import *
 from belief_propagation import *
 from bp_planning import *
 from world import *
-
+from kitchen_for_progress_2D import *
 # planner = bp_pai()
 # planner.search_for('cup')
 # ewiase = World()
@@ -43,6 +44,7 @@ terminate = False
 ewiase = World()
 planner = bp_pai(init_observation = ewiase.get_observation_tuple(),
 				 plan_skeleton = skeleton)
+env = environment()
 # planner.search_for('cup')
 timestep = 0
 while not terminate:
@@ -52,6 +54,7 @@ while not terminate:
 		terminate = True
 	else:
 		ewiase.state_transition(action)
+		env.parse_and_execute(action)
 		observation = ewiase.get_observation_tuple()
 		planner.update_belief(observation)
 

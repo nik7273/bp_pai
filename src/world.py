@@ -64,7 +64,7 @@ class World:
 			self.items[action[1]].location = action[2]
 			self.items[action[1]].in_gripper = False
 
-		elif action == 'drop-on-table':
+		elif action[0] == 'drop-on-table':
 			for item in self.items:
 				if self.items[item].in_gripper:
 					self.items[item].in_gripper = False

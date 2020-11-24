@@ -17,6 +17,7 @@ class bp_pai:
 		self.goal = goal
 		self.time_step = 0
 		self.horizon = 0
+		self.holding = 'cup'
 		self.previously_opened = []
 		self.observation = init_observation
 		self.context = common_context()
@@ -96,6 +97,7 @@ class bp_pai:
 			return ('open', likely_location)
 
 		elif goal[0] == 'inhand':
+			self.holding = goal[1]
 			return ('pick', goal[1])
 
 		elif goal[0] == 'contains':
@@ -108,7 +110,7 @@ class bp_pai:
 			return ('place', goal[1], goal[2])
 
 		elif goal == 'hand-empty':
-			return ('drop-on-table')
+			return ('drop-on-table', self.holding)
 
 		else:
 			print(goal)
