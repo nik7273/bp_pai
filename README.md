@@ -6,4 +6,7 @@ Run the following commands to install required graph representation and interact
 1. `pip install python-igraph`
 2. `pip install pyvis`
 
+You would also need to install `pygame` for the kitchen simulation using this command
+`pip install pygame==1.9.2`
+
 The belief propagation implementation draws heavily from Aleksei Krasikov's Belief Propagation tutorial: https://krashkov.com/belief-propagation/
