@@ -17,6 +17,7 @@ class bp_pai:
 		self.goal = goal
 		self.time_step = 0
 		self.horizon = 0
+		self.previously_opened = []
 		self.observation = init_observation
 		self.context = common_context()
 		self.tmp_factor_graph = None
@@ -29,14 +30,15 @@ class bp_pai:
 	def get_precondition(self, action):
 		preconditions=[]
 		if action[0] == 'pick':
-			preconditions.append(('observed', action[1]))
 			preconditions.append(('hand-empty'))
-
+			preconditions.append(('observed', action[1]))
+			
 		if action[0] == 'open':
 			preconditions.append(('hand-empty'))
 
 		if action[0] == 'fill-with':
-			preconditions.append(('inhand', action[1]))
+			# preconditions.append(('inhand', action[1]))
+			pass
 
 		if action[0] == 'stir':
 			preconditions.append(('on', action[1], 'table'))
@@ -46,6 +48,27 @@ class bp_pai:
 			preconditions.append(('inhand', action[1]))
 
 		return preconditions
+
+
+	def get_effect(self, action):
+		effects=[]
+		if action[0] == 'pick':
+			effects.append(('inhand', action[1]))
+
+		elif action[0] == 'open':
+			pass
+
+		elif action[0] == 'fill-with' and len(action)==3:
+			effects.append(('contains', action[1], action[2]))
+			effects.append(('inhand', action[1]))
+
+		elif action[0] == 'stir':
+			effects.append(('is-stirred', action[1]))
+
+		elif action[0] == 'place' and len(action)==3:
+			effects.append(('on', action[1], action[2]))
+			effects.append(('hand-empty'))
+		return effects
 
 
 	def get_temporal_factor_graph(self, skeleton):
@@ -68,7 +91,8 @@ class bp_pai:
 	def get_action_for_goal(self, goal):
 		if goal[0] == 'observed':
 			target_object = goal[1]
-			likely_location = self.search_for(target_object)
+			likely_location = self.search_for(target_object,red=self.previously_opened)
+			self.previously_opened.append(likely_location)
 			return ('open', likely_location)
 
 		elif goal[0] == 'inhand':
@@ -83,14 +107,22 @@ class bp_pai:
 		elif goal[0] == 'on':
 			return ('place', goal[1], goal[2])
 
+		elif goal == 'hand-empty':
+			return ('drop-on-table')
+
 		else:
+			print(goal)
 			return None 
 
 
-	def search_for(self, target):
+	def search_for(self, target,red=[]):
 		belief_loc = self.context.context[target]
 		places = [p[0] for p in belief_loc]
 		prob_has = [pr[1] for pr in belief_loc]
+		if len(red)>0:
+			for r in red:
+				ind = places.index(r)
+				prob_has[ind] = 0
 		nearness = [self.context.nearness[p] for p in places]
 
 		fg = factor_graph()
@@ -116,15 +148,19 @@ class bp_pai:
 
 
 	def plan(self):
+		if self.time_step == self.horizon:
+			return 'Fin'
 		current_hl_node = self.tmp_factor_graph[self.time_step]
 		for pre_condition in current_hl_node.pre_conditions:
 			if pre_condition not in self.observation:
+				# print('not satisfied: ',pre_condition)
 				return self.get_action_for_goal(pre_condition)
 				
 		self.time_step += 1
-		if self.time_step == self.horizon:
-			return 'Fin'
-		return self.get_action_for_goal(current_hl_node.effect)
+		# print('time_step: ',self.time_step)
+		self.previously_opened=[]
+		
+		return self.get_action_for_goal(current_hl_node.effect[0])
 
 
 
