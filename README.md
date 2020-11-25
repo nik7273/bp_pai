@@ -1,5 +1,5 @@
 # bp_pai
-## Belief propagation for task planning as inference in partially observable domains. 
+## Probabilistic Inference for Task Planning under uncertainty. 
 
 ### Pre-requisites
 Run the following commands to install required graph representation and interactive graph visualization packages
