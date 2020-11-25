@@ -35,6 +35,7 @@ class environment:
 	def __init__(self):
 		self.win = pygame.display.set_mode((626,391))
 		self.fps = 160
+		time.sleep(15)
 		self.gripper_width = 26
 		self.prepend = '/home/bill/pai/bp_pai/simulation/'
 		self.clock = pygame.time.Clock()

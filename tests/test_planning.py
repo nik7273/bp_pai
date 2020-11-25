@@ -1,5 +1,6 @@
 import sys
 import os
+import time
 script_path = os.path.dirname(os.path.realpath(__file__))
 os.sys.path.append(os.path.realpath(script_path + '/../src/'))
 os.sys.path.append(os.path.realpath(script_path + '/../simulation/'))
@@ -47,6 +48,7 @@ planner = bp_pai(init_observation = ewiase.get_observation_tuple(),
 env = environment()
 # planner.search_for('cup')
 timestep = 0
+# time.sleep(3)
 while not terminate:
 	action = planner.plan()
 	print(str(timestep)+': ', action)
