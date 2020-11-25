@@ -12,4 +12,4 @@ You would also need to install `pygame` for the kitchen simulation using this co
 The belief propagation implementation draws heavily from Aleksei Krasikov's Belief Propagation tutorial: https://krashkov.com/belief-propagation/
 
 A demo of BP-PAI used to plan for a coffee-making task.
-
+![](make_coffee.gif)
