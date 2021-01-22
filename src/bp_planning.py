@@ -37,9 +37,8 @@ class bp_pai:
 		if action[0] == 'open':
 			preconditions.append(('hand-empty'))
 
-		if action[0] == 'fill-with':
-			# preconditions.append(('inhand', action[1]))
-			pass
+		if action[0] == 'fill':
+			preconditions.append(('inhand', action[1]))
 
 		if action[0] == 'stir':
 			preconditions.append(('on', action[1], 'table'))
@@ -59,14 +58,15 @@ class bp_pai:
 		elif action[0] == 'open':
 			pass
 
-		elif action[0] == 'fill-with' and len(action)==3:
-			effects.append(('contains', action[1], action[2]))
+		elif action[0] == 'fill':
+			effects.append(('contains', action[1], 'water'))#action[2]))
+			# effects.append(('contains', action[1], action[2]))
 			effects.append(('inhand', action[1]))
 
 		elif action[0] == 'stir':
 			effects.append(('is-stirred', action[1]))
 
-		elif action[0] == 'place' and len(action)==3:
+		elif action[0] == 'place':
 			effects.append(('on', action[1], action[2]))
 			effects.append(('hand-empty'))
 		return effects
@@ -101,7 +101,7 @@ class bp_pai:
 			return ('pick', goal[1])
 
 		elif goal[0] == 'contains':
-			return ('fill-with', goal[1], goal[2])
+			return ('fill', goal[1])#, goal[2])
 
 		elif goal[0] == 'is-stirred':
 			return ('stir', goal[1])
@@ -161,7 +161,6 @@ class bp_pai:
 		self.time_step += 1
 		# print('time_step: ',self.time_step)
 		self.previously_opened=[]
-		
 		return self.get_action_for_goal(current_hl_node.effect[0])
 
 

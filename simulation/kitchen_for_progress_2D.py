@@ -37,7 +37,7 @@ class environment:
 		self.fps = 160
 		time.sleep(15)
 		self.gripper_width = 26
-		self.prepend = '/home/bill/pai/bp_pai/simulation/'
+		self.prepend = '/home/nikhil/Documents/College/research/bp_pai/simulation/'
 		self.clock = pygame.time.Clock()
 		self.initialize_items()
 		self.refresh_window()
