@@ -110,7 +110,8 @@ class bp_pai:
 			return ('place', goal[1], goal[2])
 
 		elif goal == 'hand-empty':
-			return ('drop-on-table', self.holding)
+			# 'place' parameter is `pos` tuple (x,y)
+			return ('place', self.holding, 'place_to_default')#self.default_pos) # placing where? want a deterministic location?
 
 		else:
 			print(goal)

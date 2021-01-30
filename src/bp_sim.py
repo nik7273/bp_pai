@@ -11,7 +11,7 @@ SETTING = {
     'sink_h': 5.,
     'sink_d': 1.,
     'sink_pos_x': 20.,
-    'left_table_width': 50.,
+    'left_table_width': 70.,
     'right_table_width': 50.,
     'faucet_h': 12.,
     'faucet_w': 5.,
@@ -49,30 +49,61 @@ class BPSim:
             gripper_init_pos: (int, int),
             gripper_init_angle: int
         """
-        self.kitchen = Kitchen2D(**SETTING)
+        self.kitchen = Kitchen2D(**SETTING)        
         self.gripper = Gripper(self.kitchen, gripper_init_pos, gripper_init_angle)
+        #self.drawer_gripper = Gripper(self.kitchen, (-10,30), gripper_init_angle)# (gripper_init_pos[0] - 10, gripper_init_pos[1]), gripper_init_angle)
+        #self.in_drawer_gripper = False
+        self.is_holding = False
         self.symbol_to_obj = {}
         self.cup = item()
         self.coffee = item()
         self.cup.location = 'dishes_drawer'
         self.coffee.location = 'spices_drawer'
         self.items = {'cup':self.cup, 'coffee':self.coffee}
+        self.default_pos = (0, 0) # change in build_world
+        self.drawer_moved = False
+        self.held_drawer = None
+        self.held_drawer_pos = None
+        
 
-    def move_drawer(self, drawer_sym, drop_pos=(-10, 10)):
+    def move_drawer(self, drawer_sym, drop_pos=(-30, 10)):
         """
         Move `drawer_sym` out of the way and drop it at `drop_pos`.
         """
         query_gui('MOVE_DRAWER', self.kitchen)
         grasp = 0.306249162768 # tunable parameter for path planner
         drawer_obj = self.symbol_to_obj[drawer_sym]
-        drawer_pos = drawer_obj.position
+        drawer_pos = copy(drawer_obj.position)
 
+        # self.drawer_gripper.find_path((drawer_pos[0], drawer_pos[1] + 10), 0)
+        # self.drawer_gripper.grasp(drawer_obj, grasp)
+        # self.drawer_gripper.find_path((drawer_pos[0], drawer_pos[1]+20), 0)
         self.gripper.find_path((drawer_pos[0], drawer_pos[1] + 10), 0)
         self.gripper.grasp(drawer_obj, grasp)
+        # self.gripper.find_path((drawer_pos[0], drawer_pos[1]+20), 0)
+
+        self.held_drawer = drawer_obj
+        self.held_drawer_pos = drawer_pos
 
         self.gripper.find_path((drop_pos[0], drop_pos[1] + 10), 0)
         self.gripper.place(drop_pos, 0)
+        self.drawer_moved = True
 
+    def close_drawer(self):
+        """
+        Take `self.held_drawer` and then place it back at `self.held_drawer_pos`.
+        """
+        query_gui('CLOSE_DRAWER', self.kitchen)
+        grasp = 0.306249162768 # tunable parameter for path planner
+        drawer_pos = self.held_drawer.position
+        self.gripper.find_path((drawer_pos[0], drawer_pos[1] + 10), 0)
+        self.gripper.grasp(self.held_drawer, grasp)
+        self.gripper.find_path((self.held_drawer_pos[0], self.held_drawer_pos[1] + 10), 0)
+        self.gripper.place(self.held_drawer_pos, 0)
+        self.held_drawer = None
+        self.held_drawer_pos = None
+        self.drawer_moved = False
+        
     def pick_up(self, obj_sym):
         """
         Pick up object represented by `obj_sym` in simulation.
@@ -91,7 +122,7 @@ class BPSim:
         query_gui('PLACE', self.kitchen)
         self.gripper.place(pos, 0)
 
-    def fill(self, duration=1):
+    def fill(self, duration=2):
         """
         Fill held object with water for `duration` seconds
         """
@@ -167,7 +198,14 @@ class BPSim:
         Input(s):
             - action: (action_name, object_name, ...) depending on action
         """
+        print(action)
+        if self.is_holding == False and action[0] != 'pick' \
+                and self.drawer_moved:
+                self.close_drawer()
+            
         if action[0] == 'open':
+            #if self.in_drawer_gripper:
+            #    self.close_drawer()
             if len(action) > 2:
                 self.move_drawer(action[1], drop_pos=action[2])
             else:
@@ -175,20 +213,30 @@ class BPSim:
             for item in self.items:
                 if self.items[item].location == action[1]:
                         self.items[item].observable = True
+
+            #self.in_drawer_gripper = True
                      
         elif action[0] == 'pick':
             self.pick_up(action[1])
             self.items[action[1]].in_gripper = True
+            self.is_holding = True
 
         elif action[0] == 'fill':
             # action[1] will contain the correct cup, but k2d doesn't need it
             self.fill()
-            self.items[action[1]].contains.append('water')
+            self.items[action[1]].contains.append('water')            
+            #if self.in_drawer_gripper:
+            #    self.close_drawer()
 
-        elif action[0] == 'place':
-            self.place(action[1])
-            self.items[action[1]].location = action[2]
+        elif action[0] == 'place': # action = ('place', 'cup', (x,y))            
+            if action[2] == 'place_to_default':
+                self.items[action[1]].location = self.default_pos
+                self.place(self.default_pos)
+            else:
+                self.items[action[1]].location = action[2]
+                self.place(action[2])
             self.items[action[1]].in_gripper = False
+            self.is_holding = False
 
         elif action[0] == 'stir':
             if len(action) > 2:
@@ -236,32 +284,32 @@ class BPSim:
         return observation
 
 
-def build_world(bp_sim):
-    """
-    Returns tuple of objects in world.
-    """
-    # Preset parameters that make this effective
-    pour_to_w = 4.17393549546
-    pour_to_h = 4.05998671658
-    pour_from_w = 3.61443970857
-    pour_from_h = 4.51052132521
+# def build_world(bp_sim):
+#     """
+#     Returns tuple of objects in world.
+#     """
+#     # Preset parameters that make this effective
+#     pour_to_w = 4.17393549546
+#     pour_to_h = 4.05998671658
+#     pour_from_w = 3.61443970857
+#     pour_from_h = 4.51052132521
 
-    scoop_w = 5.388370713
-    scoop_h = 4.52898336641
-    holder_d = 0.5
+#     scoop_w = 5.388370713
+#     scoop_h = 4.52898336641
+#     holder_d = 0.5
 
-    cup1_x = -20
-    cup2_x = 0
-    large_cup_x = 10
+#     cup1_x = -20
+#     cup2_x = 0
+#     large_cup_x = 10
 
-    # Create objects
-    drawer1 = ks.make_drawer(bp_sim.kitchen, (cup1_x, pour_from_h+2), 0, pour_from_w*2 + 2.5*holder_d, pour_from_h, holder_d)
-    cup1 = ks.make_cup(bp_sim.kitchen, (cup1_x,0), 0, pour_from_w, pour_from_h, holder_d)
-    drawer2 = ks.make_drawer(bp_sim.kitchen, (cup2_x, pour_from_h+2), 0, pour_from_w*2 + 2.5*holder_d, pour_from_h, holder_d)
-    cup2 = ks.make_cup(bp_sim.kitchen, (cup2_x,0), 0, pour_to_w, pour_to_h, holder_d)
-    large_cup = ks.make_cup(bp_sim.kitchen, (large_cup_x, 0), 0, scoop_w, scoop_h, holder_d)
+#     # Create objects
+#     drawer1 = ks.make_drawer(bp_sim.kitchen, (cup1_x, pour_from_h+2), 0, pour_from_w*2 + 2.5*holder_d, pour_from_h, holder_d)
+#     cup1 = ks.make_cup(bp_sim.kitchen, (cup1_x,0), 0, pour_from_w, pour_from_h, holder_d)
+#     drawer2 = ks.make_drawer(bp_sim.kitchen, (cup2_x, pour_from_h+2), 0, pour_from_w*2 + 2.5*holder_d, pour_from_h, holder_d)
+#     cup2 = ks.make_cup(bp_sim.kitchen, (cup2_x,0), 0, pour_to_w, pour_to_h, holder_d)
+#     large_cup = ks.make_cup(bp_sim.kitchen, (large_cup_x, 0), 0, scoop_w, scoop_h, holder_d)
 
-    return drawer1, cup1, drawer2, cup2, large_cup
+#     return drawer1, cup1, drawer2, cup2, large_cup
 
 # def main():
 #     bp_sim = BPSim()
