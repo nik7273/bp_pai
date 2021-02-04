@@ -12,7 +12,7 @@ class Temporal_node:
 
 
 class bp_pai:
-	def __init__(self, init_observation=None, plan_skeleton=None, goal = None):
+	def __init__(self, init_observation=None, plan_skeleton=None, prob = None, goal = None):
 		self.skeleton = plan_skeleton
 		self.goal = goal
 		self.time_step = 0
@@ -20,7 +20,7 @@ class bp_pai:
 		self.holding = 'cup'
 		self.previously_opened = []
 		self.observation = init_observation
-		self.context = common_context()
+		self.context = common_context(prob)
 		self.tmp_factor_graph = None
 		if self.skeleton is not None:
 			self.horizon = len(self.skeleton)

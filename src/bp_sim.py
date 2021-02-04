@@ -43,7 +43,7 @@ class BPSim:
     """
     Abstraction of Kitchen2D simulation to fit symbolic planning via BP Planner.
     """
-    def __init__(self, gripper_init_pos=(20,40), gripper_init_angle=0):
+    def __init__(self, gripper_init_pos=(20,40), gripper_init_angle=0, show_gui=True):
         """
         Input(s):
             gripper_init_pos: (int, int),
@@ -64,13 +64,15 @@ class BPSim:
         self.drawer_moved = False
         self.held_drawer = None
         self.held_drawer_pos = None
+        self.show_gui = show_gui
         
 
     def move_drawer(self, drawer_sym, drop_pos=(-30, 10)):
         """
         Move `drawer_sym` out of the way and drop it at `drop_pos`.
         """
-        query_gui('MOVE_DRAWER', self.kitchen)
+        if self.show_gui:
+            query_gui('MOVE_DRAWER', self.kitchen)
         grasp = 0.306249162768 # tunable parameter for path planner
         drawer_obj = self.symbol_to_obj[drawer_sym]
         drawer_pos = copy(drawer_obj.position)
@@ -93,7 +95,8 @@ class BPSim:
         """
         Take `self.held_drawer` and then place it back at `self.held_drawer_pos`.
         """
-        query_gui('CLOSE_DRAWER', self.kitchen)
+        if self.show_gui:
+            query_gui('CLOSE_DRAWER', self.kitchen)
         grasp = 0.306249162768 # tunable parameter for path planner
         drawer_pos = self.held_drawer.position
         self.gripper.find_path((drawer_pos[0], drawer_pos[1] + 10), 0)
@@ -108,7 +111,8 @@ class BPSim:
         """
         Pick up object represented by `obj_sym` in simulation.
         """
-        query_gui('PICK_UP', self.kitchen)
+        if self.show_gui:
+            query_gui('PICK_UP', self.kitchen)
         grasp = 0.306249162768 # tunable parameter for path planner
         obj = self.symbol_to_obj[obj_sym]
         obj_pos = obj.position
@@ -119,21 +123,24 @@ class BPSim:
         """
         Place held object at position `pos`.
         """
-        query_gui('PLACE', self.kitchen)
+        if self.show_gui:
+            query_gui('PLACE', self.kitchen)
         self.gripper.place(pos, 0)
 
     def fill(self, duration=2):
         """
         Fill held object with water for `duration` seconds
         """
-        query_gui('FILL', self.kitchen)
+        if self.show_gui:
+            query_gui('FILL', self.kitchen)
         self.gripper.get_liquid_from_faucet(duration)
 
     def pour(self, obj_sym):
         """
         Pour liquid into object represented by `obj_sym`.
         """
-        query_gui('POUR', self.kitchen)
+        if self.show_gui:
+            query_gui('POUR', self.kitchen)
         grasp = 0.306249162768
         rel_x = 3.70183788428
         rel_y = 9.01263886707
@@ -148,7 +155,8 @@ class BPSim:
         """
         Grasp `spoon_sym`, scoop from `obj_sym`, dump contents into `dump_sym`.
         """
-        query_gui('SCOOP', self.kitchen)
+        if self.show_gui:
+            query_gui('SCOOP', self.kitchen)
         # Tunable parameters received from the active sampling method
         rel_x1 = 0.0276296492162
         rel_y1 = 0.611922721287
@@ -178,7 +186,8 @@ class BPSim:
         `stir_grasp_pos`: position of gripper after picking up stirrer
         `num_stirs`: number of times to stir inside `obj_sym`
         """
-        query_gui('STIR', self.kitchen)        
+        if self.show_gui:
+            query_gui('STIR', self.kitchen)        
         stirrer = self.symbol_to_obj[stir_sym]
         obj = self.symbol_to_obj[obj_sym]
         

@@ -1,6 +1,10 @@
 import sys
 import os
 import time
+import random
+import numpy as np, numpy.random
+from copy import copy, deepcopy
+from statistics import mean, variance
 script_path = os.path.dirname(os.path.realpath(__file__))
 os.sys.path.append(os.path.realpath(script_path + '/../src/'))
 os.sys.path.append(os.path.realpath(script_path + '/../simulation/'))
@@ -42,27 +46,42 @@ def build_world(bp_sim):
 
     return drawer1, cup1, drawer2, cup2, drawer3, large_cup
 
-skeleton = [('pick','cup'), ('fill', 'cup'), ('pick', 'large_cup')]
-bp_sim = BPSim()
+skeleton = [('pick','cup')] #, ('fill', 'cup'), ('pick', 'large_cup')]
+
 sym_list = ['dishes_drawer', 'cup', 'spices_drawer', 'cup2', 'miscellaneous_drawer', 'large_cup']
-obj_list = build_world(bp_sim)
-bp_sim.init_mapping(dict(zip(sym_list, obj_list)))
+# obj_list = build_world(bp_sim)
+# bp_sim.init_mapping(dict(zip(sym_list, obj_list)))
 
-planner = bp_pai(init_observation = bp_sim.get_observation_tuple(),
-				 plan_skeleton = skeleton)
+#planner = bp_pai(init_observation = bp_sim.get_observation_tuple(),
+#				 plan_skeleton = skeleton)
+steps_taken = []
+for i in range(2):
+    bp_sim = BPSim(show_gui=False)
+    obj_list = build_world(bp_sim)
+    bp_sim.init_mapping(dict(zip(sym_list, obj_list))) 
+    prob = (tuple(np.random.dirichlet(np.ones(3),size=1)), tuple(np.random.dirichlet(np.ones(3),size=1)))   
+    planner = bp_pai(init_observation = bp_sim.get_observation_tuple(),
+				 plan_skeleton = skeleton, prob=prob)
 
-timestep = 0
-terminate = False
-while not terminate:
-    action = planner.plan()
-    print(str(timestep)+': ', action)
-    if action == 'Fin':
-        terminate = True
-    else:
-        bp_sim.parse_and_execute(action)
-        observation = bp_sim.get_observation_tuple()
-        planner.update_belief(observation)
+    timestep = 0
+    terminate = False
+    while not terminate:
+        action = planner.plan()
+        print(str(timestep)+': ', action)
+        if action == 'Fin':
+            terminate = True
+        else:
+            bp_sim.parse_and_execute(action)
+            observation = bp_sim.get_observation_tuple()
+            planner.update_belief(observation)
+            timestep += 1
 
-    timestep += 1
-    if timestep > 100:
-        break
+        if timestep > 100:
+            break
+    
+    steps_taken.append(timestep)
+    print("Experiment {} number of steps: {}".format(i, timestep)) # number of steps taken for one experiment
+
+# Calculate mean and variance of number of steps taken
+print("Mean number of steps taken: {}".format(mean(steps_taken)))
+print("Variance of number of steps taken: {}".format(variance(steps_taken)))
