@@ -4,6 +4,7 @@ from kitchen2d.gripper import Gripper
 import numpy as np
 import time
 from copy import copy
+import random
 
 SETTING = {
     'do_gui': False,
@@ -65,6 +66,7 @@ class BPSim:
         self.held_drawer = None
         self.held_drawer_pos = None
         self.show_gui = show_gui
+        self.success_thresh = 0 # probability of the gripper fail to pick up the cup
         
 
     def move_drawer(self, drawer_sym, drop_pos=(-30, 10)):
@@ -107,7 +109,7 @@ class BPSim:
         self.held_drawer_pos = None
         self.drawer_moved = False
         
-    def pick_up(self, obj_sym):
+    def pick_up(self, obj_sym, is_success = True):
         """
         Pick up object represented by `obj_sym` in simulation.
         """
@@ -117,8 +119,13 @@ class BPSim:
         obj = self.symbol_to_obj[obj_sym]
         obj_pos = obj.position
         self.gripper.find_path((obj_pos[0], obj_pos[1] + 10), 0)
-        self.gripper.grasp(obj, grasp)
-
+        if is_success:
+            self.gripper.grasp(obj, grasp)
+        else:
+            print('Failed to grip object')
+            self.gripper.find_path((obj_pos[0], obj_pos[1] + 3), 0)
+            self.gripper.find_path((obj_pos[0], obj_pos[1] + 20), 0)
+            
     def place(self, pos):
         """
         Place held object at position `pos`.
@@ -215,20 +222,31 @@ class BPSim:
         if action[0] == 'open':
             #if self.in_drawer_gripper:
             #    self.close_drawer()
-            if len(action) > 2:
-                self.move_drawer(action[1], drop_pos=action[2])
+            prob = random.random()
+            if prob > self.success_thresh:
+                if len(action) > 2:
+                    self.move_drawer(action[1], drop_pos=action[2])
+                else:
+                    self.move_drawer(action[1])
+                for item in self.items:
+                    if self.items[item].location == action[1]:
+                            self.items[item].observable = True
             else:
-                self.move_drawer(action[1])
-            for item in self.items:
-                if self.items[item].location == action[1]:
-                        self.items[item].observable = True
-
+                self.pick_up(action[1], is_success=False) # show gripper moving to object and failing grip
+                
             #self.in_drawer_gripper = True
                      
         elif action[0] == 'pick':
-            self.pick_up(action[1])
-            self.items[action[1]].in_gripper = True
-            self.is_holding = True
+            prob = random.random()
+            if prob > self.success_thresh:
+                self.pick_up(action[1])
+                self.items[action[1]].in_gripper = True
+                self.is_holding = True
+            else:
+                self.pick_up(action[1], is_success=False)
+                # probably don't need next two lines
+                self.items[action[1]].in_gripper = False
+                self.is_holding = False               
 
         elif action[0] == 'fill':
             # action[1] will contain the correct cup, but k2d doesn't need it

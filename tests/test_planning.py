@@ -55,8 +55,8 @@ sym_list = ['dishes_drawer', 'cup', 'spices_drawer', 'cup2', 'miscellaneous_draw
 #planner = bp_pai(init_observation = bp_sim.get_observation_tuple(),
 #				 plan_skeleton = skeleton)
 steps_taken = []
-for i in range(2):
-    bp_sim = BPSim(show_gui=False)
+for i in range(1):
+    bp_sim = BPSim(show_gui=True)
     obj_list = build_world(bp_sim)
     bp_sim.init_mapping(dict(zip(sym_list, obj_list))) 
     prob = (tuple(np.random.dirichlet(np.ones(3),size=1)), tuple(np.random.dirichlet(np.ones(3),size=1)))   
@@ -84,4 +84,4 @@ for i in range(2):
 
 # Calculate mean and variance of number of steps taken
 print("Mean number of steps taken: {}".format(mean(steps_taken)))
-print("Variance of number of steps taken: {}".format(variance(steps_taken)))
+# print("Variance of number of steps taken: {}".format(variance(steps_taken)))
