@@ -13,3 +13,9 @@ The belief propagation implementation draws heavily from Aleksei Krasikov's Beli
 
 A demo of BP-PAI used to plan for a coffee-making task.
 ![](make_coffee.gif)
+
+### Updated
+A version based on Kitchen2D with smoother animations. 
+```
+python src/test_planning.py
+```
